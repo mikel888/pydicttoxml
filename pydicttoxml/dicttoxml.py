@@ -22,7 +22,7 @@ class DictToXML:
 
         stream = StringIO()
 
-        xml = SimplerXMLGenerator(stream, cls.charset)
+        xml = SimplerXMLGenerator(stream, cls.charset, True)
         if root_tag_name:
             attrs = data.pop('tag_attrs', {})
             xml.startElement(cls.root_tag_name, attrs)
@@ -37,19 +37,19 @@ class DictToXML:
 
     @classmethod
     def _to_xml(cls, xml, data):
-        if isinstance(data, (list, tuple)):
-            for item in data:
-                cls._to_xml(xml, item)
-
-        elif isinstance(data, dict):
+        if isinstance(data, dict):
             for key, value in data.items():
                 if isinstance(value, dict):
                     attrs = value.pop('tag_attrs', {})
                 else:
                     attrs = {}
-                xml.startElement(key, attrs)
-                cls._to_xml(xml, value)
-                xml.endElement(key)
+                if isinstance(value,(list, tuple)):
+                    for item in value:
+                        cls._to_xml(xml, {key: item})
+                else:
+                    xml.startElement(key, attrs)
+                    cls._to_xml(xml, value)
+                    xml.endElement(key)
         else:
             xml.characters(force_text(data))
 
